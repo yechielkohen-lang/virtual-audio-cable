@@ -1,0 +1,47 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Extract FIXED Project
+      run: |
+        echo "Searching for the FIXED zip..."
+        # הפקודה הזו מוצאת את הקובץ ופותחת אותו בצורה בטוחה
+        find . -name "*FIXED*.zip" -exec unzip -o {} \;
+        
+        echo "Locating gradlew..."
+        GRADLE_PATH=$(find . -name "gradlew" | head -n 1)
+        
+        if [ -z "$GRADLE_PATH" ]; then
+          echo "ERROR: Could not find gradlew. Did the zip extract?"
+          exit 1
+        fi
+        
+        # נכנס לתיקייה הנכונה ומפעיל את הבנייה
+        PROJECT_DIR=$(dirname "$GRADLE_PATH")
+        cd "$PROJECT_DIR"
+        chmod +x gradlew
+        ./gradlew assembleDebug
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: VirtualAudioCable-Debug
+        path: "**/*.apk"
+
