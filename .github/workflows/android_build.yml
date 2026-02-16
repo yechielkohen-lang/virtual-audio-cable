@@ -10,21 +10,33 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
+    - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Set up JDK 17
+    - name: Setup Java
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Build Fixed Project
+    - name: Build with Auto-Find
       run: |
-        # פותח את הקובץ המתוקן והטוב
+        # 1. פותח את הקובץ
         unzip -q VirtualAudioCable-FIXED.zip
         
-        # נותן אישור ומפעיל
+        # 2. הרובוט מחפש את המנוע (gradlew) בכל התיקיות
+        echo "Searching for gradlew..."
+        GRADLE_PATH=$(find . -name "gradlew" | head -n 1)
+        
+        if [ -z "$GRADLE_PATH" ]; then
+          echo "ERROR: Could not find gradlew!"
+          exit 1
+        fi
+        
+        echo "Found engine at: $GRADLE_PATH"
+        
+        # 3. נכנס לתיקייה הנכונה ומפעיל
+        cd "$(dirname "$GRADLE_PATH")"
         chmod +x gradlew
         ./gradlew assembleDebug
 
@@ -32,4 +44,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: VirtualAudioCable-Debug
-        path: app/build/outputs/apk/debug/app-debug.apk
+        path: "**/*.apk"
+
