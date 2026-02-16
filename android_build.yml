@@ -19,23 +19,12 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Extract FIXED Project
+    - name: Build Fixed Project
       run: |
-        echo "Searching for the FIXED zip..."
-        # הפקודה הזו מוצאת את הקובץ ופותחת אותו בצורה בטוחה
-        find . -name "*FIXED*.zip" -exec unzip -o {} \;
+        # פותח את הקובץ המתוקן והטוב
+        unzip -q VirtualAudioCable-FIXED.zip
         
-        echo "Locating gradlew..."
-        GRADLE_PATH=$(find . -name "gradlew" | head -n 1)
-        
-        if [ -z "$GRADLE_PATH" ]; then
-          echo "ERROR: Could not find gradlew. Did the zip extract?"
-          exit 1
-        fi
-        
-        # נכנס לתיקייה הנכונה ומפעיל את הבנייה
-        PROJECT_DIR=$(dirname "$GRADLE_PATH")
-        cd "$PROJECT_DIR"
+        # נותן אישור ומפעיל
         chmod +x gradlew
         ./gradlew assembleDebug
 
@@ -43,5 +32,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: VirtualAudioCable-Debug
-        path: "**/*.apk"
-
+        path: app/build/outputs/apk/debug/app-debug.apk
