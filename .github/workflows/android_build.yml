@@ -1,1 +1,57 @@
-Make up any code you want 
+name: Build Android APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    # משתמש ב-Java 11 אבל בלי לנסות לשמור לזיכרון (Cache)
+    - name: Setup Java 11
+      uses: actions/setup-java@v4
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+        cache: 'none' 
+
+    - name: Build and Bypass Errors
+      run: |
+        echo "Starting fresh build..."
+        
+        # 1. פותח את הקובץ
+        unzip -q VirtualAudioCable-FIXED.zip || echo "Unzip failed or already done"
+        
+        # 2. מוצא את המנוע ומתקן אותו
+        GRADLE_PATH=$(find . -name "gradlew" | head -n 1)
+        
+        if [ -z "$GRADLE_PATH" ]; then
+          echo "FATAL: Could not find gradlew"
+          exit 1
+        fi
+        
+        echo "Found gradlew at: $GRADLE_PATH"
+        cd "$(dirname "$GRADLE_PATH")"
+        
+        # התיקון שהצליח להפעיל את הבנייה ל-2 דקות
+        sed -i 's/\r$//' gradlew
+        chmod +x gradlew
+        
+        # יצירת קובץ הגדרות שימנע קריסה
+        echo "org.gradle.jvmargs=-Xmx2048m" > gradle.properties
+        
+        # מפעיל את הבנייה בלי שירותי רקע (No Daemon) כדי לא להכביד על השרת
+        ./gradlew assembleDebug --no-daemon --stacktrace
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: VirtualAudioCable-Debug
+        path: "**/*.apk"
+
