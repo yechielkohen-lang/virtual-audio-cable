@@ -18,16 +18,11 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-        cache: gradle
 
     - name: Extract Project from ZIP
       run: |
         unzip VirtualAudioCable.zip
-        # Move files to root if they are inside a subfolder
-        if [ -d "VirtualAudioCable" ]; then
-          mv VirtualAudioCable/* .
-          rmdir VirtualAudioCable
-        fi
+        find . -mindepth 1 -maxdepth 3 -name "gradlew" -exec dirname {} \; | xargs -I {} mv {}/* . || true
 
     - name: Grant execute permission for gradlew
       run: |
