@@ -1,0 +1,59 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Brute Force Build
+      run: |
+        echo "Listing all files..."
+        ls -la
+        
+        echo "Unzipping ALL zip files found..."
+        unzip -o "*.zip" || true
+        
+        echo "Searching for gradlew..."
+        # מוצא את המנוע איפה שהוא לא יהיה
+        GRADLE_PATH=$(find . -name "gradlew" | head -n 1)
+        
+        if [ -z "$GRADLE_PATH" ]; then
+          echo "CRITICAL ERROR: Could not find gradlew in any folder!"
+          echo "Here is the full file structure:"
+          find . -maxdepth 4
+          exit 1
+        fi
+        
+        echo "Found gradlew at: $GRADLE_PATH"
+        
+        # נכנס לתיקייה שבה המנוע נמצא
+        PROJECT_DIR=$(dirname "$GRADLE_PATH")
+        cd "$PROJECT_DIR"
+        
+        # נותן אישור ריצה
+        chmod +x gradlew
+        
+        # מפעיל את הבנייה
+        echo "Starting build from inside $PROJECT_DIR..."
+        ./gradlew assembleDebug
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: VirtualAudioCable-Debug
+        # מוצא את ה-APK לא משנה איפה הוא נוצר
+        path: "**/*.apk"
