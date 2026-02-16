@@ -13,13 +13,13 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Setup Java
+    - name: Setup Java 11
       uses: actions/setup-java@v4
       with:
-        java-version: '17'
+        java-version: '11' # שינוי קריטי: גרסה ישנה יותר ותואמת
         distribution: 'temurin'
 
-    - name: Build with Fixes
+    - name: Build with Java 11
       run: |
         # 1. פותח את הקובץ
         unzip -q VirtualAudioCable-FIXED.zip
@@ -36,14 +36,13 @@ jobs:
         # 3. נכנס לתיקייה
         cd "$(dirname "$GRADLE_PATH")"
         
-        # === התיקון הקריטי: מנקה את הקובץ מסימנים של ווינדוס ===
+        # מתקן את הקובץ (לווינדוס/לינוקס)
         sed -i 's/\r$//' gradlew
-        
-        # נותן אישור ריצה
         chmod +x gradlew
         
-        # 4. מפעיל את הבנייה אבל מדלג על בדיקות קפדניות (lint)
-        ./gradlew assembleDebug -x lint
+        echo "Starting build with Java 11..."
+        # מריץ עם פירוט מלא כדי שנבין מה קורה אם זה נופל
+        ./gradlew assembleDebug --stacktrace
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
