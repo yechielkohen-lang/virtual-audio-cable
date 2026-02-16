@@ -19,16 +19,19 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Extract Project from ZIP
+    - name: Extract Project and Find Root
       run: |
         unzip VirtualAudioCable.zip
-        find . -mindepth 1 -maxdepth 3 -name "gradlew" -exec dirname {} \; | xargs -I {} mv {}/* . || true
+        # מחפש איפה נמצא קובץ הבנייה ומעביר הכל לשם
+        ROOT_DIR=$(find . -name "build.gradle" -not -path "*/.*" | head -n 1 | xargs dirname)
+        if [ "$ROOT_DIR" != "." ]; then
+          mv "$ROOT_DIR"/* .
+        fi
 
     - name: Grant execute permission for gradlew
       run: |
         if [ ! -f "gradlew" ]; then
-          gradle init --type basic
-          gradle wrapper --gradle-version 8.1.1
+          gradle wrapper
         fi
         chmod +x gradlew
 
@@ -39,4 +42,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: VirtualAudioCable-Debug
-        path: app/build/outputs/apk/debug/app-debug.apk
+        path: "**/build/outputs/apk/debug/*.apk"
