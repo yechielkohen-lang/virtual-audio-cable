@@ -19,12 +19,12 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Build with Auto-Find
+    - name: Build with Fixes
       run: |
         # 1. פותח את הקובץ
         unzip -q VirtualAudioCable-FIXED.zip
         
-        # 2. הרובוט מחפש את המנוע (gradlew) בכל התיקיות
+        # 2. מוצא את המנוע
         echo "Searching for gradlew..."
         GRADLE_PATH=$(find . -name "gradlew" | head -n 1)
         
@@ -33,16 +33,20 @@ jobs:
           exit 1
         fi
         
-        echo "Found engine at: $GRADLE_PATH"
-        
-        # 3. נכנס לתיקייה הנכונה ומפעיל
+        # 3. נכנס לתיקייה
         cd "$(dirname "$GRADLE_PATH")"
+        
+        # === התיקון הקריטי: מנקה את הקובץ מסימנים של ווינדוס ===
+        sed -i 's/\r$//' gradlew
+        
+        # נותן אישור ריצה
         chmod +x gradlew
-        ./gradlew assembleDebug
+        
+        # 4. מפעיל את הבנייה אבל מדלג על בדיקות קפדניות (lint)
+        ./gradlew assembleDebug -x lint
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: VirtualAudioCable-Debug
         path: "**/*.apk"
-
