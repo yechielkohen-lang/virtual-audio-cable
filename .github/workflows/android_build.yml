@@ -10,34 +10,33 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout
+    - name: Checkout Repository
       uses: actions/checkout@v4
 
-    - name: Setup Java 11
+    - name: Set up JDK 11
       uses: actions/setup-java@v4
       with:
         java-version: '11'
         distribution: 'temurin'
 
-    # שלב חדש: מתקין מנוע בנייה חזק וחדש של השרת
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v3
-      with:
-        gradle-version: '7.5'
-
-    - name: Build with Server Engine
+    - name: Build APK (No Cache)
       run: |
-        # 1. פותח את הקובץ
         unzip -q VirtualAudioCable-FIXED.zip
         
-        # 2. מוצא את התיקייה
+        echo "Finding build.gradle..."
         GRADLE_FILE=$(find . -name "build.gradle" | head -n 1)
+        
+        if [ -z "$GRADLE_FILE" ]; then
+          echo "ERROR: build.gradle not found"
+          exit 1
+        fi
+        
         PROJECT_DIR=$(dirname "$GRADLE_FILE")
+        echo "Project found at: $PROJECT_DIR"
         cd "$PROJECT_DIR"
         
-        # 3. בונה באמצעות המנוע של השרת (gradle) ולא הקובץ הישן (./gradlew)
-        # הפקודה הזו מדלגת על בדיקות מחמירות
-        gradle assembleDebug -x lint --stacktrace
+        echo "Starting build with system Gradle..."
+        gradle assembleDebug -x lint --no-daemon --stacktrace
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
