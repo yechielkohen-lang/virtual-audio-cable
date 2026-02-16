@@ -19,20 +19,33 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Extract FIXED Project
+    - name: Find FIXED Zip and Build
       run: |
-        # פה הקסם - אנחנו פותחים את הקובץ החדש והתקין
-        unzip VirtualAudioCable-FIXED.zip
+        echo "Looking for the FIXED zip file..."
+        # מוצא את הקובץ שיש לו FIXED בשם (לא משנה אותיות גדולות/קטנות)
+        FIXED_ZIP=$(find . -maxdepth 1 -iname "*FIXED*.zip" | head -n 1)
         
-        # הקוד הזה מוודא שהקבצים במקום הנכון
-        GRADLE_FILE=$(find . -name "build.gradle" | head -n 1)
-        if [ -z "$GRADLE_FILE" ]; then
-          echo "Error: build.gradle not found!"
+        if [ -z "$FIXED_ZIP" ]; then
+          echo "ERROR: Could not find any zip file with 'FIXED' in the name!"
+          ls -la # מראה לנו איזה קבצים כן יש (למקרה של תקלה)
           exit 1
         fi
+        
+        echo "Found zip: $FIXED_ZIP"
+        unzip -o "$FIXED_ZIP"
+        
+        # מחפש את קובץ ההגדרות בתוך מה שיצא
+        GRADLE_FILE=$(find . -name "build.gradle" | head -n 1)
+        
+        if [ -z "$GRADLE_FILE" ]; then
+          echo "ERROR: build.gradle not found inside the zip!"
+          exit 1
+        fi
+        
+        # מעביר הכל לתיקייה הראשית
         PROJECT_ROOT=$(dirname "$GRADLE_FILE")
         if [ "$PROJECT_ROOT" != "." ]; then
-          mv "$PROJECT_ROOT"/* .
+          cp -r "$PROJECT_ROOT"/* .
         fi
 
     - name: Grant execute permission for gradlew
@@ -46,4 +59,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: VirtualAudioCable-Debug
-        path: app/build/outputs/apk/debug/app-debug.apk
+        path: "**/build/outputs/apk/debug/*.apk"
